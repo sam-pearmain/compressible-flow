@@ -67,7 +67,7 @@ pub fn newton_raphson(
         // solver termination on convergence criteria
         if (x_next - x_current).abs() <= tolerance {
             x_current = x_next;
-            break;
+            return x_current;
         }
 
         // store updated values for next iteration
@@ -75,6 +75,6 @@ pub fn newton_raphson(
         f_current = f_next;
         df_curr = df_next;
     }
-    
+
     panic!("solution not converged");
 }
