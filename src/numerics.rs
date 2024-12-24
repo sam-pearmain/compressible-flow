@@ -7,29 +7,21 @@ pub fn bisection (
 ) -> f64 {
     // default tolerance 1e-9 unless otherwise given
     let tolerance = tolerance.unwrap_or(1e-9);
-    let max_iters: = max_iters.unwrap_or(200);
-
-    // declare midpoint and lower bound and upper bound
-    let mut midpoint: f64;
-    let mut lowerbound: f64;
-    let mut upperbound: f64;
+    let max_iters = max_iters.unwrap_or(200);
 
     // initialise lower and upper bound according to given bounds
-    if x1 < x2 {
-        lowerbound = x1;
-        upperbound = x2; 
-    } else {
-        lowerbound = x2;
-        upperbound = x1;
-    }
+    let (mut lowerbound, mut upperbound) = if x1 < x2 { (x1, x2) } else { (x2, x1) };
 
+    // iterate
     for _ in 0..max_iters {
-        midpoint = (upperbound - lowerbound) / 2.0;
+        let midpoint = (upperbound + lowerbound) / 2.0;
         
-        if f(midpoint) < tolerance {
+        // check convergence
+        if f(midpoint).abs() < tolerance || (upperbound - lowerbound) / 2.0 < tolerance {
             return midpoint;
         }
 
+        // update bounds
         if (f(midpoint) * f(lowerbound)) > 0.0 {
             lowerbound = midpoint;
         } else {
@@ -49,7 +41,7 @@ pub fn newton_raphson(
 ) -> f64 {
     // default tolerance 1e-9 unless otherwise given
     let tolerance = tolerance.unwrap_or(1e-9);
-    let max_iters: = max_iters.unwrap_or(200);
+    let max_iters = max_iters.unwrap_or(200);
     
     // declare next root estimate and function evaluations
     let mut x_current = x_init;
@@ -83,6 +75,6 @@ pub fn newton_raphson(
         f_current = f_next;
         df_curr = df_next;
     }
-
-    x_current
+    
+    panic!("solution not converged");
 }

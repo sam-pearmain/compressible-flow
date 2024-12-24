@@ -67,6 +67,7 @@ pub fn calc_mach_from_prandtl_meyer_angle(prandtl_meyer_angle: f64, specific_hea
         &prandtl_meyer_function_1st_derivative, 
         1.5,
         None,
+        None,
     );
     let mach_number: f64 = (eta.powi(2) + 1.0).sqrt();
     Ok(mach_number)
