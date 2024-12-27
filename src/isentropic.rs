@@ -74,5 +74,5 @@ pub fn calc_mach_from_prandtl_meyer_angle(prandtl_meyer_angle: f64, specific_hea
 }
 
 pub fn valid_specific_heat_ratio(specific_heat_ratio: f64) -> bool {
-    specific_heat_ratio > 0.0 && specific_heat_ratio <= 1.0
+    specific_heat_ratio > 1.0
 }
