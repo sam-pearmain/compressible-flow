@@ -29,30 +29,39 @@ pub fn calc_mach_from_temperature_ratio(temperature_ratio: f64, specific_heat_ra
         // check valid temperature ratio
         return Err(IsentropicFlowError::InvalidTemperatureRatio);
     }
-    let mach_number: f64 = (2.0 * ((1.0 / temperature_ratio) - 1.0)) / (specific_heat_ratio - 1.0).sqrt();
+    let mach_number: f64 = (2.0 * ((1.0 / temperature_ratio) - 1.0) / (specific_heat_ratio - 1.0)).sqrt();
     Ok(mach_number)
 }
 
 pub fn calc_mach_from_pressure_ratio(pressure_ratio: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
     if pressure_ratio <= 0.0 || pressure_ratio > 1.0 {
         // check valid pressure ratio
         return Err(IsentropicFlowError::InvalidPressureRatio);
     }
-    let mach_number: f64 = (2.0 * ((1.0 / pressure_ratio.powf((specific_heat_ratio - 1.0) / specific_heat_ratio)) - 1.0)) / (specific_heat_ratio - 1.0);
+    let mach_number: f64 = (2.0 * ((1.0 / pressure_ratio.powf((specific_heat_ratio - 1.0) / specific_heat_ratio)) - 1.0) / (specific_heat_ratio - 1.0)).sqrt();
     Ok(mach_number)
 }
 
 pub fn calc_mach_from_density_ratio(density_ratio: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
     if density_ratio <= 0.0 || density_ratio > 1.0 {
         // check valid density ratio
         return Err(IsentropicFlowError::InvalidDensityRatio);
     }
-    let mach_number: f64 = ((2.0 * (density_ratio.powf((specific_heat_ratio - 1.0) / specific_heat_ratio) - 1.0)) / (specific_heat_ratio - 1.0)).sqrt();
+    let mach_number: f64 = ((2.0 * ((1.0 / density_ratio.powf(specific_heat_ratio - 1.0)) - 1.0)) / (specific_heat_ratio - 1.0)).sqrt();
     Ok(mach_number)
 }
 
 pub fn calc_mach_from_prandtl_meyer_angle(prandtl_meyer_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
     // eta is the value of (m^2 - 1).sqrt()
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
     let specific_heat_ratio_constant = ((specific_heat_ratio + 1.0) / (specific_heat_ratio - 1.0)).sqrt();
     let prandtl_meyer_function = |eta: f64| {
         specific_heat_ratio_constant * (eta / specific_heat_ratio_constant).atan()
@@ -73,6 +82,7 @@ pub fn calc_mach_from_prandtl_meyer_angle(prandtl_meyer_angle: f64, specific_hea
     Ok(mach_number)
 }
 
-pub fn valid_specific_heat_ratio(specific_heat_ratio: f64) -> bool {
+fn valid_specific_heat_ratio(specific_heat_ratio: f64) -> bool {
+    // specific heat ratio must be greater than 1
     specific_heat_ratio > 1.0
 }
