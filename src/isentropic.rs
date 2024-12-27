@@ -12,6 +12,50 @@ pub enum IsentropicFlowError {
     InvalidSpecificHeatRatio,
 }
 
+pub fn calc_pressure_ratio_from_mach(mach_number: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    let pressure_ratio: f64 = (1.0 + (specific_heat_ratio - 1.0) / 2.0 * mach_number.powi(2)).powf(-specific_heat_ratio / (specific_heat_ratio - 1.0));
+    Ok(pressure_ratio)
+}
+
+pub fn calc_temperature_ratio_from_mach(mach_number: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    let temperature_ratio: f64 = (1.0 + (specific_heat_ratio - 1.0) / 2.0 * mach_number.powi(2)).powi(-1);
+    Ok(temperature_ratio)
+}
+
+pub fn calc_density_ratio_from_mach(mach_number: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    let density_ratio: f64 = (1.0 + (specific_heat_ratio - 1.0) / 2.0 * mach_number.powi(2)).powf(-1.0 / (specific_heat_ratio - 1.0));
+    Ok(density_ratio)
+}
+
+pub fn calc_mach_from_speed_of_sound(velocity: f64, speed_of_sound: f64) -> Result<f64, IsentropicFlowError> {
+    Ok(velocity / speed_of_sound)
+}
+
+pub fn prandtl_meyer_function(mach_number: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    if mach_number <= 1.0 {
+        return Err(IsentropicFlowError::InvalidMachNumber);
+    }
+
+    let gamma_ratio = (specific_heat_ratio - 1.0) / (specific_heat_ratio + 1.0);
+    let sqrt_gamma_ratio = gamma_ratio.sqrt();
+    let prandtl_meyer_angle: f64 = ((1.0 / sqrt_gamma_ratio) * (sqrt_gamma_ratio * (mach_number.powi(2) - 1.0).sqrt()).atan())
+        - (mach_number.powi(2) - 1.0).sqrt().atan();
+    Ok(prandtl_meyer_angle)
+}
+
+
 pub fn calc_mach_from_mach_angle(mach_angle: f64) -> Result<f64, IsentropicFlowError> {
     if mach_angle < 0.0 || mach_angle > PI / 2.0 {
         // check valid mach angle in radians
