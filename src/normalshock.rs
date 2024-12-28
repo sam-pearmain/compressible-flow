@@ -1,4 +1,5 @@
-use crate::numerics;
+#![allow(dead_code)]
+
 use crate::isentropic::{ IsentropicFlowError, valid_specific_heat_ratio};
 
 
@@ -32,15 +33,37 @@ struct NormalShock {
     stagnation_pressure_ratio: f64,     // p02 / p01
 }
 
-impl NormalShock {
-    pub fn new(input: Input, output: Output, specific_heat_ratio: Option<f64>) -> Result<NormalShock, IsentropicFlowError> {
-        let specific_heat_ratio = specific_heat_ratio.unwrap_or(1.4);
-        if !valid_specific_heat_ratio(specific_heat_ratio) {
-            return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
-        }
-    }
-}
+// impl NormalShock {
+//     pub fn new(input: Input, output: Output, specific_heat_ratio: Option<f64>) -> Result<NormalShock, IsentropicFlowError> {
+//         let specific_heat_ratio = specific_heat_ratio.unwrap_or(1.4);
+//         if !valid_specific_heat_ratio(specific_heat_ratio) {
+//             return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+//         }
+
+//         Ok(())
+//     }
+// }
 
 pub fn calculate() {
 
+}
+
+pub fn calc_downstream_mach_from_upstream_mach(upstream_mach: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    let downstream_mach_squared: f64 = 
+        ((specific_heat_ratio - 1.0) * upstream_mach.powi(2) + 2.0) / 
+        (2.0 * specific_heat_ratio * upstream_mach.powi(2) - (specific_heat_ratio - 1.0));
+    Ok(downstream_mach_squared.sqrt())
+}
+
+pub fn calc_pressure_ratio_from_upstream_mach(upstream_mach: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    let pressure_ratio: f64 = 
+        (2.0 * specific_heat_ratio * upstream_mach.powi(2) - (specific_heat_ratio - 1.0)) /
+        (specific_heat_ratio + 1.0);
+    Ok(pressure_ratio)
 }
