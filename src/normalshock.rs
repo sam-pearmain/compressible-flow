@@ -9,7 +9,6 @@ pub enum Input {
     TemperatureRatio(f64),
     PressureRatio(f64),
     DensityRatio(f64),
-    StagnationTemperatureRatio(f64),
     StagnationPressureRatio(f64),
 }
 
@@ -19,14 +18,13 @@ pub enum Output {
     TemperatureRatio,
     PressureRatio,
     DensityRatio,
-    StagnationTemperatureRatio,
     StagnationPressureRatio,
 }
 
 struct NormalShock {
     upstream_mach_number: f64,          // M1
     downstream_mach_number: f64,        // M2
-    temperature_ratio: f64,             // T2 / T1
+    temperature_ratio: f64,             // T2 / T1 (static temperature ratio)
     pressure_ratio: f64,                // p2 / p1
     density_ratio: f64,                 // ρ2 / ρ1
     stagnation_temperature_ratio: f64,  // T02 / T01
@@ -66,4 +64,35 @@ pub fn calc_pressure_ratio_from_upstream_mach(upstream_mach: f64, specific_heat_
         (2.0 * specific_heat_ratio * upstream_mach.powi(2) - (specific_heat_ratio - 1.0)) /
         (specific_heat_ratio + 1.0);
     Ok(pressure_ratio)
+}
+
+pub fn calc_temperature_ratio_from_upstream_mach(upstream_mach: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    let temperature_ratio: f64 = 
+        (2.0 * specific_heat_ratio * upstream_mach.powi(2) - (specific_heat_ratio - 1.0)) *
+        ((specific_heat_ratio - 1.0) * upstream_mach.powi(2) + 2.0) / 
+        ((specific_heat_ratio + 1.0).powi(2) * upstream_mach.powi(2));
+    Ok(temperature_ratio)
+}
+
+pub fn calc_density_ratio_from_upstream_mach(upstream_mach: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    let density_ratio: f64 = 
+        ((specific_heat_ratio + 1.0) * upstream_mach.powi(2)) / 
+        ((specific_heat_ratio - 1.0) * upstream_mach.powi(2) + 2.0);
+    Ok(density_ratio)
+}
+
+pub fn calc_stagnation_pressure_ratio_from_upstream_mach(upstream_mach: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    let stagnation_pressure_ratio: f64 = 
+        calc_density_ratio_from_upstream_mach(upstream_mach, specific_heat_ratio)?.powf(specific_heat_ratio / (specific_heat_ratio - 1.0)) *
+        (calc_pressure_ratio_from_upstream_mach(upstream_mach, specific_heat_ratio)? / 1.0).powf(1.0 / (specific_heat_ratio - 1.0));
+    Ok(stagnation_pressure_ratio)
 }
