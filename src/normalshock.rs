@@ -1,7 +1,5 @@
-#![allow(dead_code)]
-use std::result;
-
-use crate::{isentropic::{ valid_specific_heat_ratio, IsentropicFlowError }, numerics::{bisection, newton_raphson}};
+use crate::isentropic::{valid_specific_heat_ratio, IsentropicFlowError}; 
+use crate::numerics::{bisection, newton_raphson};
 
 
 pub enum Input {
