@@ -1,6 +1,5 @@
 #![allow(dead_code)]
-
-use crate::isentropic::{ IsentropicFlowError, valid_specific_heat_ratio};
+use crate::isentropic::{ valid_specific_heat_ratio, IsentropicFlowError };
 
 
 pub enum Input {
