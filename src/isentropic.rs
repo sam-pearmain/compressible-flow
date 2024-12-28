@@ -1,6 +1,7 @@
 use std::f64::consts::PI;
 use crate::numerics;
 
+
 #[derive(Debug)]
 pub enum IsentropicFlowError {
     InvalidMachNumber,
@@ -66,6 +67,7 @@ impl IsentropicFlow {
 }
 
 pub fn calculate(output: Output, input: Input, specific_heat_ratio: Option<f64>) -> Result<f64, IsentropicFlowError> {
+    // simple calculator function for if you're lazy 
     let specific_heat_ratio = specific_heat_ratio.unwrap_or(1.4);
     if !valid_specific_heat_ratio(specific_heat_ratio) {
         return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
@@ -158,7 +160,6 @@ pub fn prandtl_meyer_function(mach_number: f64, specific_heat_ratio: f64) -> Res
         - (mach_number.powi(2) - 1.0).sqrt().atan(); // 3rd term
     Ok(prandtl_meyer_angle)
 }
-
 
 pub fn calc_mach_from_mach_angle(mach_angle: f64) -> Result<f64, IsentropicFlowError> {
     if mach_angle < 0.0 || mach_angle > PI / 2.0 {
