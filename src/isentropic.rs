@@ -1,5 +1,5 @@
 use std::f64::consts::PI;
-use crate::numerics;
+use crate::numerics::*;
 
 
 #[derive(Debug)]
@@ -11,6 +11,7 @@ pub enum IsentropicFlowError {
     InvalidDensityRatio,
     InvalidPrandtlMeyerAngle,
     InvalidSpecificHeatRatio,
+    WhatTheFuck,
 }
 
 pub enum Input {
@@ -211,22 +212,16 @@ pub fn calc_mach_from_prandtl_meyer_angle(prandtl_meyer_angle: f64, specific_hea
     if !valid_specific_heat_ratio(specific_heat_ratio) {
         return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
     }
-    let specific_heat_ratio_constant = ((specific_heat_ratio + 1.0) / (specific_heat_ratio - 1.0)).sqrt();
-    let prandtl_meyer_function = |eta: f64| {
-        specific_heat_ratio_constant * (eta / specific_heat_ratio_constant).atan()
+    let alpha = ((specific_heat_ratio + 1.0) / (specific_heat_ratio - 1.0)).sqrt(); // just a constant to make things easier
+    let f = |eta: f64| {
+        alpha * (eta / alpha).atan()
         - eta.atan() - prandtl_meyer_angle    
     };
-    let prandtl_meyer_function_1st_derivative = |eta: f64| {
-        1.0 / ((eta / specific_heat_ratio_constant).powi(2) + 1.0)
+    let df = |eta: f64| {
+        1.0 / ((eta / alpha).powi(2) + 1.0)
         - 1.0 / (eta.powi(2) + 1.0)
     };
-    let eta: f64 = numerics::newton_raphson(
-        &prandtl_meyer_function,
-        &prandtl_meyer_function_1st_derivative, 
-        1.5,
-        None,
-        None,
-    );
+    let eta: f64 = newton_raphson(&f, &df, 1.5, None, None);
     let mach_number: f64 = (eta.powi(2) + 1.0).sqrt();
     Ok(mach_number)
 }
