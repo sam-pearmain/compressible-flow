@@ -6,7 +6,8 @@ use crate::numerics::bisection;
 
 
 pub enum Input {
-    UpstreamMach(f64), // value must be given
+    UpstreamMach(f64),
+    NormalUpstreamMach(f64),
     DeflectionAngle(f64), // potentially need to change to allow for strong or weak oblique shocks
     ShockAngle(f64),
 }
@@ -76,6 +77,42 @@ impl ObliqueShock {
 
         let shock_angle = (normal_upstream_mach / upstream_mach).asin();
         ObliqueShock::from_mach_and_shock_angle(upstream_mach, shock_angle, specific_heat_ratio)
+    }
+}
+
+pub fn calculate(input: Vec<Input>, output: Output, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+
+    let oblique_shock = match input.as_slice() {
+        [Input::UpstreamMach(upstream_mach), Input::ShockAngle(shock_angle)] => {
+            ObliqueShock::from_mach_and_shock_angle(*upstream_mach, *shock_angle, specific_heat_ratio)?
+        }
+        [Input::UpstreamMach(upstream_mach), Input::DeflectionAngle(deflection_angle)] => {
+            ObliqueShock::from_mach_and_deflection_angle(*upstream_mach, *deflection_angle, specific_heat_ratio)?
+        }
+        [Input::UpstreamMach(upstream_mach), Input::DeflectionAngle(_), Input::ShockAngle(shock_angle)] => {
+            ObliqueShock::from_mach_and_shock_angle(*upstream_mach, *shock_angle, specific_heat_ratio)?
+        }
+        [Input::UpstreamMach(upstream_mach), Input::NormalUpstreamMach(normal_upstream_mach)] => {
+            ObliqueShock::from_mach_and_normal_mach(*upstream_mach, *normal_upstream_mach, specific_heat_ratio)?
+        }
+        _ => {
+            return Err(IsentropicFlowError::WhatTheFuck);
+        }
+    };
+
+    match output {
+        Output::DownstreamMach => Ok(oblique_shock.downstream_mach),
+        Output::DeflectionAngle => Ok(oblique_shock.deflection_angle),
+        Output::ShockAngle => Ok(oblique_shock.shock_angle),
+        Output::PressureRatio => Ok(oblique_shock.pressure_ratio),
+        Output::DensityRatio => Ok(oblique_shock.density_ratio),
+        Output::TemperatureRatio => Ok(oblique_shock.temperature_ratio),
+        Output::StagnationPressureRatio => Ok(oblique_shock.stagnation_pressure_ratio),
+        Output::NormalUpstreamMach => Ok(oblique_shock.normal_upstream_mach),
+        Output::NormalDownstreamMach => Ok(oblique_shock.normal_downstream_mach),
     }
 }
 
