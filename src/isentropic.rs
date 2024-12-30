@@ -12,6 +12,7 @@ pub enum IsentropicFlowError {
     InvalidPrandtlMeyerAngle,
     InvalidSpecificHeatRatio,
     WhatTheFuck,
+    MathError,
 }
 
 pub enum Input {
