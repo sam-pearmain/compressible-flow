@@ -8,7 +8,7 @@ use crate::numerics::bisection;
 pub enum Input {
     UpstreamMach(f64),
     NormalUpstreamMach(f64),
-    DeflectionAngle(f64), // potentially need to change to allow for strong or weak oblique shocks
+    DeflectionAngle(f64), // potentially need to change to allow for strong or weak oblique shocks, currently only does weak shocks
     ShockAngle(f64),
 }
 
