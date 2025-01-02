@@ -1,3 +1,5 @@
+use core::f64;
+
 pub fn bisection (
     f: &impl Fn(f64) -> f64,
     x1: f64, // 1st solution bound
@@ -77,4 +79,27 @@ pub fn newton_raphson(
     }
 
     panic!("solution not converged");
+}
+
+pub fn runge_kutta_fourth_order() {
+
+}
+
+pub fn runge_kutta_fourth_order_step(f: &impl Fn(f64, f64, f64) -> f64, r: f64, y1: f64, y2: f64, h: f64) -> (f64, f64) {
+    let k1_y1: f64 = h * y2;
+    let k1_y2: f64 = h * f(r, y1, y2);
+
+    let k2_y1: f64 = h * (y2 + 0.5 * k1_y2);
+    let k2_y2: f64 = h * f(r + 0.5 * h, y1 + 0.5 * k1_y1, y2 + 0.5 * k1_y2);
+
+    let k3_y1: f64 = h * (y2 + 0.5 * k2_y2);
+    let k3_y2: f64 = h * f(r + 0.5 * h, y1 + 0.5 * k2_y1, y2 + 0.5 * k2_y2);
+
+    let k4_y1: f64 = h * (y2 + k3_y2);
+    let k4_y2: f64 = h * f(r + h, y1 + k3_y1, y2 + k3_y2);
+
+    let new_y1: f64 = y1 + (k1_y1 + 2.0 * k2_y1 + 2.0 * k3_y1 + k4_y1) / 6.0;
+    let new_y2: f64 = y2 + (k1_y2 + 2.0 * k2_y2 + 2.0 * k3_y2 + k4_y2) / 6.0;
+
+    (new_y1, new_y2)
 }

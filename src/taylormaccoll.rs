@@ -42,7 +42,7 @@ pub struct SupersonicCone {
 
 impl SupersonicCone {
     pub fn from_mach_and_cone_angle(upstream_mach: f64, cone_angle: f64, specific_heat_ratio: f64) -> Result<SupersonicCone, IsentropicFlowError> {
-        if cone_angle > PI / 2.0 || cone_angle < 0 {
+        if cone_angle > PI / 2.0 || cone_angle < 0.0 {
             return Err(IsentropicFlowError::WhatTheFuck);
         }
         // guess a shock angle, use mach angle since mach_angle < shock_angle < PI / 2 rads
@@ -65,4 +65,12 @@ impl SupersonicCone {
     pub fn from_mach_and_surface_mach() {
 
     }
+}
+
+pub fn solve_taylor_maccoll() {
+    
+}
+
+pub fn taylor_maccoll() {
+
 }
