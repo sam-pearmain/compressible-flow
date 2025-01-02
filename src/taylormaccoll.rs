@@ -1,5 +1,8 @@
 #![allow(dead_code)]
 
+use std::f64::consts::PI;
+use crate::isentropic::*; 
+
 pub enum Input {
     UpstreamMach(f64),
     ConeAngle(f64),
@@ -38,12 +41,25 @@ pub struct SupersonicCone {
 }
 
 impl SupersonicCone {
-    pub fn from_mach_and_cone_angle() {
+    pub fn from_mach_and_cone_angle(upstream_mach: f64, cone_angle: f64, specific_heat_ratio: f64) -> Result<SupersonicCone, IsentropicFlowError> {
+        if cone_angle > PI / 2.0 || cone_angle < 0 {
+            return Err(IsentropicFlowError::WhatTheFuck);
+        }
+        // guess a shock angle, use mach angle since mach_angle < shock_angle < PI / 2 rads
+        let mut shock_angle = calc_mach_angle_from_mach(upstream_mach)?;
 
+        // need function to calculate cone angle for a given freestream mach and shock angle
+        Ok(SupersonicCone)
     }
 
-    pub fn from_mach_and_shock_angle() {
+    pub fn from_mach_and_shock_angle(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<SupersonicCone, IsentropicFlowError> {
+        let mach_angle: f64 = calc_mach_angle_from_mach(upstream_mach)?;
+        if shock_angle > PI / 2.0 || shock_angle - mach_angle < 0.0 {
+            return Err(IsentropicFlowError::WhatTheFuck);
+        }
 
+        // need function to calculate flow deflection angle 
+        Ok(SupersonicCone)
     }
 
     pub fn from_mach_and_surface_mach() {
