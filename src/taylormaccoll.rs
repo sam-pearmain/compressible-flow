@@ -29,7 +29,7 @@ pub struct SupersonicCone {
     surface_mach_number: f64,               // Mc (mach number at the surface of the cone)
     cone_angle: f64,                        // σ
     shock_angle: f64,                       // β
-    shock_turn_angle: f64,                  // ^^^
+    shock_turn_angle: f64,                  // δ
     pressure_ratio: f64,                    // p2 / p1
     density_ratio: f64,                     // ρ2 / ρ1
     temperature_ratio: f64,                 // T2 / T1
