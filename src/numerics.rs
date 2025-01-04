@@ -1,5 +1,3 @@
-use core::f64;
-
 pub fn bisection (
     f: &impl Fn(f64) -> f64,
     x1: f64, // 1st solution bound
