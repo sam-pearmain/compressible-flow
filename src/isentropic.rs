@@ -33,7 +33,8 @@ pub enum Output {
     PrandtlMeyerAngle,
 }
 
-struct IsentropicFlow {
+#[derive(Debug)]
+pub struct IsentropicFlow {
     mach_number: f64,
     mach_angle: f64,
     temperature_ratio: f64,
@@ -43,7 +44,7 @@ struct IsentropicFlow {
 }
 
 impl IsentropicFlow {
-    fn from_mach(mach_number: f64, specific_heat_ratio: f64) -> Result<IsentropicFlow, IsentropicFlowError> {
+    pub fn from_mach(mach_number: f64, specific_heat_ratio: f64) -> Result<IsentropicFlow, IsentropicFlowError> {
         if !valid_specific_heat_ratio(specific_heat_ratio) {
             return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
         }

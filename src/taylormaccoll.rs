@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use std::f64::consts::PI;
 use crate::isentropic::*; 
 
 pub enum Input {
@@ -41,27 +40,12 @@ pub struct SupersonicCone {
 }
 
 impl SupersonicCone {
-    pub fn from_mach_and_cone_angle(upstream_mach: f64, cone_angle: f64, specific_heat_ratio: f64) -> Result<SupersonicCone, IsentropicFlowError> {
-        if cone_angle > PI / 2.0 || cone_angle < 0.0 {
-            return Err(IsentropicFlowError::WhatTheFuck);
-        }
-        // guess a shock angle, use mach angle since mach_angle < shock_angle < PI / 2 rads
-        let mut shock_angle = calc_mach_angle_from_mach(upstream_mach)?;
-
-        // need function to calculate cone angle for a given freestream mach and shock angle
-        Ok(SupersonicCone)
-
-        // check out shooting method online
+    pub fn from_mach_and_cone_angle() {
+        
     }
 
-    pub fn from_mach_and_shock_angle(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<SupersonicCone, IsentropicFlowError> {
-        let mach_angle: f64 = calc_mach_angle_from_mach(upstream_mach)?;
-        if shock_angle > PI / 2.0 || shock_angle - mach_angle < 0.0 {
-            return Err(IsentropicFlowError::WhatTheFuck);
-        }
-
-        // need function to calculate flow deflection angle 
-        Ok(SupersonicCone)
+    pub fn from_mach_and_shock_angle() {
+        
     }
 
     pub fn from_mach_and_surface_mach() {
@@ -71,12 +55,14 @@ impl SupersonicCone {
 
 pub fn solve_taylor_maccoll(
     initial_velocity_vector: (f64, f64),
-    shock_angle: f64,
-    cone_angle: f64,
+    initial_angle: f64, // typically the shock angle created by the cone
+    final_angle: f64,   // the final integration bound
     specific_heat_ratio: f64,
+    // a bool to halt the integration once the tangential velocity becomes 0
     steps: Option<i32>,
 ) -> Result<(Vec<(f64, f64)>, Vec<f64>), IsentropicFlowError> {
     // uses a 4th order runge-kutta method to solve the taylor maccoll equations
+    // between the two bounds of initial_angle and final_angle
     if !valid_specific_heat_ratio(specific_heat_ratio) {
         return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
     }
@@ -85,18 +71,18 @@ pub fn solve_taylor_maccoll(
     let mut velocity_components: Vec<(f64, f64)> = Vec::new();
     let mut thetas: Vec<f64> = Vec::new();
     velocity_components.push(initial_velocity_vector);
-    thetas.push(shock_angle);
+    thetas.push(initial_angle);
 
     // set up step size
-    let steps: i32 = steps.unwrap_or(200);
-    let h: f64 = (shock_angle - cone_angle) / steps as f64;
+    let steps: i32 = steps.unwrap_or(2000);
+    let h: f64 = (initial_angle - final_angle) / steps as f64;
 
     // set up starting conditions
     let mut current_radial_velocity: f64 = initial_velocity_vector.0;
     let mut current_tangential_velocity: f64 = initial_velocity_vector.1;
-    let mut current_theta: f64 = shock_angle;
+    let mut current_theta: f64 = initial_angle;
     
-    while current_theta <= cone_angle {
+    while current_theta <= final_angle {
         // first runge-kutta constants
         let k1: (f64, f64) = 
             taylor_maccoll(
@@ -139,10 +125,10 @@ pub fn solve_taylor_maccoll(
 
         // calculate subsequent radial and tangential velocity
         let next_radial_velocity: f64 = 
-            current_radial_velocity * 1.0 / 6.0 *
+            current_radial_velocity + (1.0 / 6.0) *
             (k1_radial + 2.0 * k2_radial + 2.0 * k3_radial + k4_radial);
         let next_tangential_velocity: f64 = 
-            current_tangential_velocity * 1.0 / 6.0 *
+            current_tangential_velocity + (1.0 / 6.0) *
             (k1_tangential + 2.0 * k2_tangential + 2.0 * k3_tangential + k4_tangential);
 
         // append results to results vectors
@@ -152,8 +138,7 @@ pub fn solve_taylor_maccoll(
         // update current values with subsequent values and loop
         current_radial_velocity = next_radial_velocity;
         current_tangential_velocity = next_tangential_velocity;
-        current_theta = current_theta + h;
-        
+        current_theta += h;
     }
 
     Ok((velocity_components, thetas))
@@ -163,7 +148,7 @@ pub fn taylor_maccoll(velocity_vector: (f64, f64), theta: f64, specific_heat_rat
     if !valid_specific_heat_ratio(specific_heat_ratio) {
         return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
     }
-    
+
     // extract the radial and tangential velocity components
     let radial_velocity: f64 = velocity_vector.0;
     let tangential_velocity: f64 = velocity_vector.1;
