@@ -121,11 +121,11 @@ pub fn calc_downstream_mach(upstream_mach: f64, shock_angle: f64, deflection_ang
     let normal_upstream_mach: f64 = calc_normal_upstream_mach(upstream_mach, shock_angle)?;
 
     let normal_downstream_mach: f64 = (
-        (1.0 + (specific_heat_ratio - 1.0) * normal_upstream_mach.powi(2) / 2.0) /
+        (normal_upstream_mach.powi(2) + (specific_heat_ratio - 1.0) / 2.0) / 
         (specific_heat_ratio * normal_upstream_mach.powi(2) - (specific_heat_ratio - 1.0) / 2.0)
     ).sqrt();
 
-    let downstream_mach: f64 = normal_downstream_mach / (shock_angle - deflection_angle).cos();
+    let downstream_mach: f64 = normal_downstream_mach / (shock_angle - deflection_angle).sin();
     Ok(downstream_mach)
 }
 
