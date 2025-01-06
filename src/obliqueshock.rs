@@ -210,14 +210,14 @@ pub fn calc_max_shock_angle(upstream_mach: f64, specific_heat_ratio: f64) -> Res
 }
 
 pub fn calc_normal_upstream_mach(upstream_mach: f64, shock_angle: f64) -> Result<f64, IsentropicFlowError> {
-    if upstream_mach < 1.0 {
+    if upstream_mach <= 1.0 {
         return Err(IsentropicFlowError::InvalidMachNumber);
     }
     Ok(upstream_mach * shock_angle.sin())
 }
 
 pub fn calc_normal_downstream_mach(downstream_mach: f64, shock_angle: f64, deflection_angle: f64) -> Result<f64, IsentropicFlowError> {
-    if downstream_mach < 1.0 {
+    if downstream_mach <= 1.0 {
         return Err(IsentropicFlowError::InvalidMachNumber);
     }
     Ok(downstream_mach * (shock_angle - deflection_angle).sin())

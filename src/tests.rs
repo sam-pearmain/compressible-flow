@@ -3,10 +3,11 @@
 use std::f64::consts::PI;
 use crate::isentropic::IsentropicFlow;
 use crate::normalshock::NormalShock;
-use crate::obliqueshock::ObliqueShock;
+use crate::obliqueshock::{self, ObliqueShock};
 
 #[test]
 fn test_isentropic() {
+    // working
     let mach_number = 2.0;
     let specific_heat_ratio = 1.4;
 
@@ -22,6 +23,7 @@ fn test_isentropic() {
 
 #[test]
 fn test_normal_shock() {
+    // working
     let upstream_mach = 3.0;
     let specific_heat_ratio = 1.4;
 
@@ -32,6 +34,19 @@ fn test_normal_shock() {
         Err(e) => {
             panic!("failed with error: {:?}", e);
         }
+    }
+}
+
+#[test]
+fn test_calc_shock_angle_from_deflection_angle() {
+    // working
+    let upstream_mach = 3.0;
+    let deflection_angle = PI / 6.0; // 30 deg
+    let specific_heat_ratio = 1.4;
+    
+    match obliqueshock::calc_shock_angle(upstream_mach, deflection_angle, specific_heat_ratio) {
+        Ok(shock_angle) => {println!("shock angle: {:?}", shock_angle);}
+        Err(e) => {panic!("what the fuckkkkkk {:?}", e);}
     }
 }
 
