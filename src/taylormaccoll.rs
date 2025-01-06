@@ -70,3 +70,31 @@ impl SupersonicCone {
 pub fn solve_taylor_maccoll() {
     
 }
+
+pub fn taylor_maccoll(y: (f64, f64), theta: f64, specific_heat_ratio: f64) -> Result<(f64, f64), IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    
+    // extract the radial and tangential velocity components
+    let radial_velocity: f64 = y.0;
+    let tangential_velocity: f64 = y.1;
+
+    // calculate the radial velocity derivative
+    let radial_velocity_derivative = tangential_velocity;
+
+    // caclulate the tangential velocity derivative
+    let denominator = 
+        ((specific_heat_ratio - 1.0) / 2.0) 
+        * (1.0 - radial_velocity.powi(2) - tangential_velocity.powi(2)) 
+        - tangential_velocity.powi(2);
+    let numerator = 
+        tangential_velocity.powi(2) * radial_velocity
+        - ((specific_heat_ratio - 1.0) / 2.0)
+        * (1.0 - radial_velocity.powi(2) - tangential_velocity.powi(2))
+        * (2.0 * radial_velocity + tangential_velocity / theta.tan());
+
+    let tangential_velocity_derivative = numerator / denominator;
+
+    Ok((radial_velocity_derivative, tangential_velocity_derivative))
+}
