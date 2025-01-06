@@ -80,7 +80,7 @@ pub fn newton_raphson(
 }
 
 pub fn runge_kutta_fourth_order() {
-
+    
 }
 
 pub fn runge_kutta_fourth_order_step(f: &impl Fn(f64, f64, f64) -> f64, r: f64, y1: f64, y2: f64, h: f64) -> (f64, f64) {

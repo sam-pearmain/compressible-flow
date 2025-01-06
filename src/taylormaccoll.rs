@@ -70,7 +70,3 @@ impl SupersonicCone {
 pub fn solve_taylor_maccoll() {
     
 }
-
-pub fn taylor_maccoll() {
-
-}
