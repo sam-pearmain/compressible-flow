@@ -24,6 +24,7 @@ pub enum Output {
     NormalDownstreamMach,
 }
 
+#[derive(Debug)]
 pub struct ObliqueShock {
     upstream_mach: f64,             // M1
     downstream_mach: f64,           // M2
