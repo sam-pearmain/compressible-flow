@@ -151,7 +151,7 @@ pub fn calc_stagnation_pressure_ratio_from_upstream_mach(upstream_mach: f64, spe
     }
     let stagnation_pressure_ratio: f64 = 
         calc_density_ratio_from_upstream_mach(upstream_mach, specific_heat_ratio)?.powf(specific_heat_ratio / (specific_heat_ratio - 1.0)) *
-        (calc_pressure_ratio_from_upstream_mach(upstream_mach, specific_heat_ratio)? / 1.0).powf(1.0 / (specific_heat_ratio - 1.0));
+        (1.0 / calc_pressure_ratio_from_upstream_mach(upstream_mach, specific_heat_ratio)?).powf(1.0 / (specific_heat_ratio - 1.0));
     Ok(stagnation_pressure_ratio)
 }
 
