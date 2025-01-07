@@ -193,10 +193,10 @@ pub fn calc_shock_angle(upstream_mach: f64, deflection_angle: f64, specific_heat
         return calculated_deflection_angle - deflection_angle
     };
 
-    let lower_bound = deflection_angle;
-    let upper_bound = PI / 2.0;
+    let lower_bound: f64 = deflection_angle;
+    let upper_bound: f64 = PI / 2.0;
 
-    let shock_angle = bisection(&f, lower_bound, upper_bound, None, None);
+    let shock_angle: f64 = bisection(&f, lower_bound, upper_bound, None, None);
 
     if shock_angle.is_nan() {
         return Err(IsentropicFlowError::MathError);
