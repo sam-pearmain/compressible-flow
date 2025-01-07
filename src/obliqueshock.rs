@@ -167,7 +167,7 @@ pub fn calc_density_ratio(upstream_mach: f64, shock_angle: f64, specific_heat_ra
 pub fn calc_temperature_ratio(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
     let pressure_ratio: f64 = calc_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
     let density_ratio: f64 = calc_density_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
-    let temperature_ratio: f64 = pressure_ratio * density_ratio;
+    let temperature_ratio: f64 = pressure_ratio * (1.0 / density_ratio);
     Ok(temperature_ratio)
 }
 

@@ -65,6 +65,7 @@ fn test_calc_downstream_mach_number() {
 
 #[test]
 fn test_oblique_shock() {
+    // passed 
     let upstream_mach = 3.0;
     let deflection_angle = PI / 6.0; // 30 deg
     let specific_heat_ratio = 1.4;
@@ -81,5 +82,5 @@ fn test_oblique_shock() {
 
 #[test]
 fn test_taylor_maccoll() {
-
+    // oh god
 }
