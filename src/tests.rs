@@ -4,6 +4,7 @@ use std::f64::consts::PI;
 use crate::isentropic::IsentropicFlow;
 use crate::normalshock::NormalShock;
 use crate::obliqueshock::{self, ObliqueShock};
+use crate::taylormaccoll;
 
 #[test]
 fn test_isentropic() {
@@ -82,5 +83,34 @@ fn test_oblique_shock() {
 
 #[test]
 fn test_taylor_maccoll() {
-    // oh god
+    // starting stuff
+    let mach_number = 4.0;
+    let shock_angle = PI / 6.0; // 30 deg
+    let cone_angle = 0.4095987749775; // got from compressible aerodynamics calculator 
+    let specific_heat_ratio = 1.4;
+    
+    // get deflection angle
+    let deflection_angle = obliqueshock::calc_deflection_angle(mach_number, shock_angle, specific_heat_ratio).expect("what");
+
+    // get downstream velocity components
+    let downstream_mach = obliqueshock::calc_downstream_mach_from_shock_angle(mach_number, shock_angle, specific_heat_ratio).expect("erm");
+    let radial_downstream_mach = downstream_mach * (shock_angle - deflection_angle).cos();
+    let tangential_downstream_mach = downstream_mach *(shock_angle - deflection_angle).sin();
+    
+    assert_eq!((downstream_mach), (tangential_downstream_mach.powi(2) + radial_downstream_mach.powi(2)).sqrt());
+
+    match taylormaccoll::solve_taylor_maccoll(
+        (radial_downstream_mach, tangential_downstream_mach), 
+        shock_angle, 
+        cone_angle, 
+        specific_heat_ratio, 
+        None,
+    ) {
+        Ok(results) => {
+            println!("{:?}", results);
+        }
+        Err(e) => {
+            panic!("please no: {:?}", e);
+        }
+    }
 }
