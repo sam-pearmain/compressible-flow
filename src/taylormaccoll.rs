@@ -67,27 +67,28 @@ pub fn solve_taylor_maccoll(
         return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
     }
 
-    // vectors to store the results
-    let mut velocity_components: Vec<(f64, f64)> = Vec::new();
-    let mut thetas: Vec<f64> = Vec::new();
-    velocity_components.push(initial_velocity_vector);
-    thetas.push(initial_angle);
-
     // set up step size
     let steps: i32 = steps.unwrap_or(2000);
     let h: f64 = (initial_angle - final_angle) / steps as f64;
 
+    // vectors to store the results
+    let mut velocity_components: Vec<(f64, f64)> = Vec::new();
+    velocity_components.push(initial_velocity_vector);
+
+    let thetas: Vec<f64> = (0..=steps)
+        .map(|i| initial_angle + i as f64 * h)
+        .collect();
+
     // set up starting conditions
     let mut current_radial_velocity: f64 = initial_velocity_vector.0;
     let mut current_tangential_velocity: f64 = initial_velocity_vector.1;
-    let mut current_theta: f64 = initial_angle;
     
-    while current_theta <= final_angle {
+    for &theta in &thetas {
         // first runge-kutta constants
         let k1: (f64, f64) = 
             taylor_maccoll(
                 (current_radial_velocity, current_tangential_velocity),
-                current_theta,
+                theta,
                 specific_heat_ratio,
             )?;
         let k1_radial: f64 = h * k1.0;
@@ -97,7 +98,7 @@ pub fn solve_taylor_maccoll(
         let k2: (f64, f64) =
             taylor_maccoll(
                 (current_radial_velocity + (0.5 * k1_radial), current_tangential_velocity + (0.5 * k1_tangential)),
-                current_theta + (0.5 * h),
+                theta + (0.5 * h),
                 specific_heat_ratio,
             )?;
         let k2_radial: f64 = h * k2.0;
@@ -107,7 +108,7 @@ pub fn solve_taylor_maccoll(
         let k3: (f64, f64) =
             taylor_maccoll(
                 (current_radial_velocity + (0.5 * k2_radial), current_tangential_velocity + (0.5 * k2_tangential)),
-                current_theta + (0.5 * h),
+                theta + (0.5 * h),
                 specific_heat_ratio,
             )?;
         let k3_radial: f64 = h * k3.0;
@@ -117,7 +118,7 @@ pub fn solve_taylor_maccoll(
         let k4: (f64, f64) = 
             taylor_maccoll(
                 (current_radial_velocity + k3_radial, current_tangential_velocity + k3_tangential),
-                current_theta + h,
+                theta + h,
                 specific_heat_ratio,
             )?;
         let k4_radial: f64 = h * k4.0;
@@ -131,14 +132,14 @@ pub fn solve_taylor_maccoll(
             current_tangential_velocity + (1.0 / 6.0) *
             (k1_tangential + 2.0 * k2_tangential + 2.0 * k3_tangential + k4_tangential);
 
-        // append results to results vectors
+        // append velocity components to results vector
         velocity_components.push((next_radial_velocity, next_tangential_velocity));
-        thetas.push(current_theta);
+        
+        // put break clause here
 
         // update current values with subsequent values and loop
         current_radial_velocity = next_radial_velocity;
         current_tangential_velocity = next_tangential_velocity;
-        current_theta += h;
     }
 
     Ok((velocity_components, thetas))

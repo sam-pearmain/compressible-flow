@@ -83,6 +83,7 @@ fn test_oblique_shock() {
 
 #[test]
 fn test_taylor_maccoll() {
+    // yeah it doesnt quite work
     // starting stuff
     let mach_number = 4.0;
     let shock_angle = PI / 6.0; // 30 deg
@@ -97,7 +98,7 @@ fn test_taylor_maccoll() {
     let radial_downstream_mach = downstream_mach * (shock_angle - deflection_angle).cos();
     let tangential_downstream_mach = downstream_mach *(shock_angle - deflection_angle).sin();
     
-    assert_eq!((downstream_mach), (tangential_downstream_mach.powi(2) + radial_downstream_mach.powi(2)).sqrt());
+    assert!((downstream_mach - (tangential_downstream_mach.powi(2) + radial_downstream_mach.powi(2)).sqrt()).abs() < 1e-6);
 
     match taylormaccoll::solve_taylor_maccoll(
         (radial_downstream_mach, tangential_downstream_mach), 
