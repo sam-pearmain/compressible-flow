@@ -52,7 +52,7 @@ fn test_calc_shock_angle_from_deflection_angle() {
 
 #[test]
 fn test_calc_downstream_mach_number() {
-    // failed
+    // passed
     let upstream_mach = 3.0;
     let shock_angle = PI / 4.0;
     let specific_heat_ratio = 1.4;

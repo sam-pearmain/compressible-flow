@@ -45,7 +45,7 @@ impl ObliqueShock {
         let pressure_ratio: f64 = calc_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
         let density_ratio: f64 = calc_density_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
         let temperature_ratio: f64 = calc_temperature_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
-        let stagnation_pressure_ratio: f64 = pressure_ratio / density_ratio.powf(specific_heat_ratio);
+        let stagnation_pressure_ratio: f64 = calc_stagnation_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
         let normal_upstream_mach: f64 = calc_normal_upstream_mach(upstream_mach, shock_angle)?;
         let normal_downstream_mach: f64 = calc_normal_downstream_mach(downstream_mach, shock_angle, deflection_angle)?;
 
@@ -140,6 +140,47 @@ pub fn calc_downstream_mach_from_deflection_angle(upstream_mach: f64, deflection
     calc_downstream_mach(upstream_mach, shock_angle, deflection_angle, specific_heat_ratio)
 }
 
+pub fn calc_deflection_angle(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    let tan_deflection_angle = 
+    2.0 / shock_angle.tan() * 
+    (upstream_mach.powi(2) * shock_angle.sin().powi(2) - 1.0) / 
+    (upstream_mach.powi(2) * (specific_heat_ratio + (2.0 * shock_angle).cos()) + 2.0);
+    Ok(tan_deflection_angle.atan())
+}
+
+pub fn calc_pressure_ratio(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    let pressure_ratio: f64 = 
+        (2.0 * specific_heat_ratio * upstream_mach.powi(2) 
+            * shock_angle.sin().powi(2) - (specific_heat_ratio - 1.0)) / 
+        (specific_heat_ratio + 1.0);
+    Ok(pressure_ratio)
+}
+
+pub fn calc_density_ratio(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    let density_ratio: f64 = 
+    (specific_heat_ratio + 1.0) * upstream_mach.powi(2) * shock_angle.sin().powi(2) /
+    ((specific_heat_ratio - 1.0) * upstream_mach.powi(2) * shock_angle.sin().powi(2) + 2.0);
+    Ok(density_ratio)
+    
+}
+
+pub fn calc_temperature_ratio(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    let pressure_ratio: f64 = calc_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
+    let density_ratio: f64 = calc_density_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
+    let temperature_ratio: f64 = pressure_ratio * density_ratio;
+    Ok(temperature_ratio)
+}
+
+pub fn calc_stagnation_pressure_ratio(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    if !valid_specific_heat_ratio(specific_heat_ratio) {
+        return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
+    }
+    let stagnation_pressure_ratio: f64 =
+        calc_density_ratio(upstream_mach, shock_angle, specific_heat_ratio)?.powf(specific_heat_ratio / (specific_heat_ratio - 1.0)) *
+        (1.0 / calc_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)?).powf(1.0 / (specific_heat_ratio - 1.0));
+    Ok(stagnation_pressure_ratio)
+}
+
 pub fn calc_shock_angle(upstream_mach: f64, deflection_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
     if upstream_mach <= 1.0 {
         return Err(IsentropicFlowError::InvalidMachNumber);
@@ -164,36 +205,6 @@ pub fn calc_shock_angle(upstream_mach: f64, deflection_angle: f64, specific_heat
     Ok(shock_angle)
 }
 
-pub fn calc_deflection_angle(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
-    let tan_deflection_angle = 
-        2.0 / shock_angle.tan() * 
-        (upstream_mach.powi(2) * shock_angle.sin().powi(2) - 1.0) / 
-        (upstream_mach.powi(2) * (specific_heat_ratio + (2.0 * shock_angle).cos()) + 2.0);
-    Ok(tan_deflection_angle.atan())
-}
-
-pub fn calc_pressure_ratio(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
-    let pressure_ratio: f64 = 
-        2.0 * upstream_mach.powi(2) * shock_angle.sin().powi(2) /
-        (specific_heat_ratio + 1.0);
-    Ok(pressure_ratio)
-}
-
-pub fn calc_density_ratio(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
-    let density_ratio: f64 = 
-        (specific_heat_ratio + 1.0) * upstream_mach.powi(2) * shock_angle.sin().powi(2) /
-        ((specific_heat_ratio - 1.0) * upstream_mach.powi(2) * shock_angle.sin().powi(2) + 2.0);
-    Ok(density_ratio)
-
-}
-
-pub fn calc_temperature_ratio(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
-    let pressure_ratio: f64 = calc_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
-    let density_ratio: f64 = calc_density_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
-    let temperature_ratio: f64 = pressure_ratio * density_ratio;
-    Ok(temperature_ratio)
-}
-
 pub fn calc_max_shock_angle(upstream_mach: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
     if !valid_specific_heat_ratio(specific_heat_ratio) {
         return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
@@ -201,7 +212,7 @@ pub fn calc_max_shock_angle(upstream_mach: f64, specific_heat_ratio: f64) -> Res
     if upstream_mach <= 1.0 {
         return Err(IsentropicFlowError::InvalidMachNumber);
     }
-
+    
     let sin_max_shock_angle: f64 = 
         ((1.0 / (specific_heat_ratio * upstream_mach.powi(2))) * 
         (1.0 +
