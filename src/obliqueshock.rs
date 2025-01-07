@@ -117,16 +117,27 @@ pub fn calculate(input: Vec<Input>, output: Output, specific_heat_ratio: f64) ->
     }
 }
 
-pub fn calc_downstream_mach(upstream_mach: f64, shock_angle: f64, deflection_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+fn calc_downstream_mach(upstream_mach: f64, shock_angle: f64, deflection_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
     let normal_upstream_mach: f64 = calc_normal_upstream_mach(upstream_mach, shock_angle)?;
 
+    // this is wrong
     let normal_downstream_mach: f64 = (
-        (normal_upstream_mach.powi(2) + (specific_heat_ratio - 1.0) / 2.0) / 
-        (specific_heat_ratio * normal_upstream_mach.powi(2) - (specific_heat_ratio - 1.0) / 2.0)
+        (1.0 + (specific_heat_ratio - 1.0) * normal_upstream_mach.powi(2) / 2.0)
+        / (specific_heat_ratio * normal_upstream_mach.powi(2) - (specific_heat_ratio - 1.0) / 2.0)
     ).sqrt();
 
     let downstream_mach: f64 = normal_downstream_mach / (shock_angle - deflection_angle).sin();
     Ok(downstream_mach)
+}
+
+pub fn calc_downstream_mach_from_shock_angle(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    let deflection_angle = calc_deflection_angle(upstream_mach, shock_angle, specific_heat_ratio)?;
+    calc_downstream_mach(upstream_mach, shock_angle, deflection_angle, specific_heat_ratio)
+}
+
+pub fn calc_downstream_mach_from_deflection_angle(upstream_mach: f64, deflection_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
+    let shock_angle = calc_shock_angle(upstream_mach, deflection_angle, specific_heat_ratio)?;
+    calc_downstream_mach(upstream_mach, shock_angle, deflection_angle, specific_heat_ratio)
 }
 
 pub fn calc_shock_angle(upstream_mach: f64, deflection_angle: f64, specific_heat_ratio: f64) -> Result<f64, IsentropicFlowError> {
@@ -191,7 +202,7 @@ pub fn calc_max_shock_angle(upstream_mach: f64, specific_heat_ratio: f64) -> Res
         return Err(IsentropicFlowError::InvalidMachNumber);
     }
 
-    let sin_max_shock_angle = 
+    let sin_max_shock_angle: f64 = 
         ((1.0 / (specific_heat_ratio * upstream_mach.powi(2))) * 
         (1.0 +
             ((specific_heat_ratio + 1.0) * (

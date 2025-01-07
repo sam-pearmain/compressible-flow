@@ -49,7 +49,7 @@ impl SupersonicCone {
     }
 
     pub fn from_mach_and_surface_mach() {
-
+        
     }
 }
 
