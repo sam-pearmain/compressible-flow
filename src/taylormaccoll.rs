@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
-use crate::isentropic::*; 
+use crate::isentropic::{self, valid_specific_heat_ratio, IsentropicFlowError};
+use crate::obliqueshock; 
 
 pub enum Input {
     UpstreamMach(f64),
@@ -25,9 +26,10 @@ pub enum Output {
 }
 
 pub struct SupersonicCone {
-    surface_mach_number: f64,               // Mc (mach number at the surface of the cone)
-    cone_angle: f64,                        // σ
+    upstream_mach: f64,                     // M1
     shock_angle: f64,                       // β
+    surface_mach: f64,               // Mc (mach number at the surface of the cone)
+    cone_angle: f64,                        // σ
     shock_turn_angle: f64,                  // δ
     pressure_ratio: f64,                    // p2 / p1
     density_ratio: f64,                     // ρ2 / ρ1
@@ -44,8 +46,61 @@ impl SupersonicCone {
         
     }
 
-    pub fn from_mach_and_shock_angle() {
+    pub fn from_mach_and_shock_angle(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<SupersonicCone, IsentropicFlowError> {
+        // calculate oblique shock stuff
+        let pressure_ratio: f64 = obliqueshock::calc_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
+        let density_ratio: f64 = obliqueshock::calc_density_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
+        let temperature_ratio: f64 = obliqueshock::calc_temperature_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
+        let stagnation_pressure_ratio: f64 = obliqueshock::calc_stagnation_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;
+        let deflection_angle: f64 = obliqueshock::calc_deflection_angle(upstream_mach, shock_angle, specific_heat_ratio)?;
         
+        // get downstream velocity components for solving taylor maccoll
+        let downstream_mach = obliqueshock::calc_downstream_mach_from_shock_angle(upstream_mach, shock_angle, specific_heat_ratio)?;
+        let radial_downstream_mach = downstream_mach * (shock_angle - deflection_angle).cos();
+        let tangential_downstream_mach = - downstream_mach *(shock_angle - deflection_angle).sin();
+    
+        // solve taylor maccoll eqautions
+        let (velocity_components, thetas) = 
+            solve_taylor_maccoll(
+                (radial_downstream_mach, tangential_downstream_mach), 
+                shock_angle, 
+                0.0, 
+                specific_heat_ratio, 
+                true, 
+                Some(4000),
+            )?;
+        let cone_angle: f64 = *thetas.last().ok_or_else(|| IsentropicFlowError::WhatTheFuck)?;
+        let surface_mach: f64 = velocity_components.last()
+            .map(|&(radial, _)| radial)
+            .ok_or_else(||IsentropicFlowError::WhatTheFuck)?;
+
+        let shock_turn_angle: f64 = shock_angle - cone_angle;
+
+        // and get the other values
+        let surface_pressure_ratio: f64 = 
+            isentropic::calc_pressure_ratio_from_mach(surface_mach, specific_heat_ratio)? *             // this is pc / p0c = pc / p02
+            (1.0 / isentropic::calc_pressure_ratio_from_mach(upstream_mach, specific_heat_ratio)?) *    // this is p1 / p01
+            obliqueshock::calc_stagnation_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;         // this is p02 / p01 = p0c / p01
+
+        let surface_density_ratio: f64 = 1.0;
+
+        let surface_temperature_ratio: f64 = 1.0;
+
+        Ok(SupersonicCone{
+            upstream_mach, 
+            shock_angle,
+            surface_mach,
+            cone_angle,
+            shock_turn_angle,
+            pressure_ratio,
+            density_ratio,
+            temperature_ratio,
+            stagnation_pressure_ratio,
+            surface_pressure_ratio,
+            surface_density_ratio,
+            surface_temperature_ratio,
+            surface_stagnation_pressure_ratio: stagnation_pressure_ratio,
+        })
     }
 
     pub fn from_mach_and_surface_mach() {
@@ -58,7 +113,7 @@ pub fn solve_taylor_maccoll(
     initial_angle: f64, // typically the shock angle created by the cone
     final_angle: f64,   // the final integration bound
     specific_heat_ratio: f64,
-    // a bool to halt the integration once the tangential velocity becomes 0
+    stop_integration_at_wall: bool,
     steps: Option<i32>,
 ) -> Result<(Vec<(f64, f64)>, Vec<f64>), IsentropicFlowError> {
     // uses a 4th order runge-kutta method to solve the taylor maccoll equations
@@ -68,27 +123,26 @@ pub fn solve_taylor_maccoll(
     }
 
     // set up step size
-    let steps: i32 = steps.unwrap_or(2000);
+    let steps: i32 = steps.unwrap_or(4000);
     let h: f64 = (final_angle - initial_angle) / steps as f64;
 
     // vectors to store the results
     let mut velocity_components: Vec<(f64, f64)> = Vec::new();
+    let mut thetas: Vec<f64> = Vec::new();
     velocity_components.push(initial_velocity_vector);
-
-    let thetas: Vec<f64> = (0..=steps)
-        .map(|i| initial_angle + i as f64 * h)
-        .collect();
+    thetas.push(initial_angle);
 
     // set up starting conditions
     let mut current_radial_velocity: f64 = initial_velocity_vector.0;
     let mut current_tangential_velocity: f64 = initial_velocity_vector.1;
+    let mut current_theta: f64 = initial_angle;
     
-    for &theta in thetas.iter().skip(1) {
+    for _ in 0..steps {
         // first runge-kutta constants
         let k1: (f64, f64) = 
             taylor_maccoll(
                 (current_radial_velocity, current_tangential_velocity),
-                theta,
+                current_theta,
                 specific_heat_ratio,
             )?;
         let k1_radial: f64 = h * k1.0;
@@ -98,7 +152,7 @@ pub fn solve_taylor_maccoll(
         let k2: (f64, f64) =
             taylor_maccoll(
                 (current_radial_velocity + (0.5 * k1_radial), current_tangential_velocity + (0.5 * k1_tangential)),
-                theta + (0.5 * h),
+                current_theta + (0.5 * h),
                 specific_heat_ratio,
             )?;
         let k2_radial: f64 = h * k2.0;
@@ -108,7 +162,7 @@ pub fn solve_taylor_maccoll(
         let k3: (f64, f64) =
             taylor_maccoll(
                 (current_radial_velocity + (0.5 * k2_radial), current_tangential_velocity + (0.5 * k2_tangential)),
-                theta + (0.5 * h),
+                current_theta + (0.5 * h),
                 specific_heat_ratio,
             )?;
         let k3_radial: f64 = h * k3.0;
@@ -118,7 +172,7 @@ pub fn solve_taylor_maccoll(
         let k4: (f64, f64) = 
             taylor_maccoll(
                 (current_radial_velocity + k3_radial, current_tangential_velocity + k3_tangential),
-                theta + h,
+                current_theta + h,
                 specific_heat_ratio,
             )?;
         let k4_radial: f64 = h * k4.0;
@@ -131,15 +185,20 @@ pub fn solve_taylor_maccoll(
         let next_tangential_velocity: f64 = 
             current_tangential_velocity + (1.0 / 6.0) *
             (k1_tangential + 2.0 * k2_tangential + 2.0 * k3_tangential + k4_tangential);
+        let next_theta: f64 = current_theta + h;
+
+        if stop_integration_at_wall && next_tangential_velocity.is_sign_positive() {
+            break;
+        }
 
         // append velocity components to results vector
         velocity_components.push((next_radial_velocity, next_tangential_velocity));
-        
-        // put break clause here
-
+        thetas.push(next_theta);
+    
         // update current values with subsequent values and loop
         current_radial_velocity = next_radial_velocity;
         current_tangential_velocity = next_tangential_velocity;
+        current_theta = next_theta;
     }
 
     Ok((velocity_components, thetas))
@@ -171,4 +230,16 @@ pub fn taylor_maccoll(velocity_vector: (f64, f64), theta: f64, specific_heat_rat
     let tangential_velocity_derivative = numerator / denominator;
 
     Ok((radial_velocity_derivative, tangential_velocity_derivative))
+}
+
+pub fn calc_surface_pressure_ratio() {
+    // todo
+}
+
+pub fn calc_surface_density_ratio() {
+    // todo
+}
+
+pub fn calc_surface_temperature_ratio() {
+    
 }

@@ -108,8 +108,9 @@ fn test_taylor_maccoll() {
     match taylormaccoll::solve_taylor_maccoll(
         (radial_downstream_mach, tangential_downstream_mach), 
         shock_angle, 
-        cone_angle, 
-        specific_heat_ratio, 
+        0.0, 
+        specific_heat_ratio,
+        true, 
         None,
     ) {
         Ok((velocity_components, thetas)) => {

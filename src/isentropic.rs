@@ -35,12 +35,12 @@ pub enum Output {
 
 #[derive(Debug)]
 pub struct IsentropicFlow {
-    mach_number: f64,
-    mach_angle: f64,
-    temperature_ratio: f64,
-    pressure_ratio: f64,
-    density_ratio: f64,
-    prandtl_meyer_angle: f64,
+    mach_number: f64,           // M
+    mach_angle: f64,            // μ
+    temperature_ratio: f64,     // T / T0
+    pressure_ratio: f64,        // p / p0
+    density_ratio: f64,         // ρ / ρ0
+    prandtl_meyer_angle: f64,   // 𝒱(M)
 }
 
 impl IsentropicFlow {
