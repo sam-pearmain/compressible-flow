@@ -69,7 +69,7 @@ pub fn solve_taylor_maccoll(
 
     // set up step size
     let steps: i32 = steps.unwrap_or(2000);
-    let h: f64 = (initial_angle - final_angle) / steps as f64;
+    let h: f64 = (final_angle - initial_angle) / steps as f64;
 
     // vectors to store the results
     let mut velocity_components: Vec<(f64, f64)> = Vec::new();
@@ -83,7 +83,7 @@ pub fn solve_taylor_maccoll(
     let mut current_radial_velocity: f64 = initial_velocity_vector.0;
     let mut current_tangential_velocity: f64 = initial_velocity_vector.1;
     
-    for &theta in &thetas {
+    for &theta in thetas.iter().skip(1) {
         // first runge-kutta constants
         let k1: (f64, f64) = 
             taylor_maccoll(

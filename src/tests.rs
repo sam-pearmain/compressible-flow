@@ -85,6 +85,9 @@ fn test_oblique_shock() {
 fn test_taylor_maccoll() {
     // yeah it doesnt quite work
     // starting stuff
+    use std::fs::File;
+    use std::io::Write;
+
     let mach_number = 4.0;
     let shock_angle = PI / 6.0; // 30 deg
     let cone_angle = 0.4095987749775; // got from compressible aerodynamics calculator 
@@ -96,9 +99,11 @@ fn test_taylor_maccoll() {
     // get downstream velocity components
     let downstream_mach = obliqueshock::calc_downstream_mach_from_shock_angle(mach_number, shock_angle, specific_heat_ratio).expect("erm");
     let radial_downstream_mach = downstream_mach * (shock_angle - deflection_angle).cos();
-    let tangential_downstream_mach = downstream_mach *(shock_angle - deflection_angle).sin();
+    let tangential_downstream_mach = - downstream_mach *(shock_angle - deflection_angle).sin();
     
     assert!((downstream_mach - (tangential_downstream_mach.powi(2) + radial_downstream_mach.powi(2)).sqrt()).abs() < 1e-6);
+
+    let mut file = File::create("results.txt").expect("failed");
 
     match taylormaccoll::solve_taylor_maccoll(
         (radial_downstream_mach, tangential_downstream_mach), 
@@ -107,8 +112,15 @@ fn test_taylor_maccoll() {
         specific_heat_ratio, 
         None,
     ) {
-        Ok(results) => {
-            println!("{:?}", results);
+        Ok((velocity_components, thetas)) => {
+            assert_eq!(velocity_components.len(), thetas.len());
+            for ((radial, tangential), theta) in velocity_components.iter().zip(thetas.iter()) {
+                writeln!(
+                    file, 
+                    "velocity components: ({:.4}, {:.4}), theta: {:.4}",
+                    radial, tangential, theta
+                ).expect("failed");
+            }
         }
         Err(e) => {
             panic!("please no: {:?}", e);
