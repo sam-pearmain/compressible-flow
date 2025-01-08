@@ -25,6 +25,7 @@ pub enum Output {
     SurfaceStagnationPressureratio, 
 }
 
+#[derive(Debug)]
 pub struct SupersonicCone {
     upstream_mach: f64,                     // M1
     shock_angle: f64,                       // β
@@ -43,7 +44,7 @@ pub struct SupersonicCone {
 
 impl SupersonicCone {
     pub fn from_mach_and_cone_angle() {
-        
+        // todo
     }
 
     pub fn from_mach_and_shock_angle(upstream_mach: f64, shock_angle: f64, specific_heat_ratio: f64) -> Result<SupersonicCone, IsentropicFlowError> {
@@ -111,7 +112,7 @@ impl SupersonicCone {
     }
 
     pub fn from_mach_and_surface_mach() {
-        
+        // todo
     }
 }
 

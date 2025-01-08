@@ -82,7 +82,7 @@ fn test_oblique_shock() {
 }
 
 #[test]
-fn test_taylor_maccoll() {
+fn test_solve_taylor_maccoll() {
     // yeah it doesnt quite work
     // starting stuff
     use std::fs::File;
@@ -124,6 +124,23 @@ fn test_taylor_maccoll() {
         }
         Err(e) => {
             panic!("please no: {:?}", e);
+        }
+    }
+}
+
+#[test]
+fn test_taylor_maccoll() {
+    // something wrong with my ratios
+    let mach_number = 4.0;
+    let shock_angle = PI / 6.0; // 30 deg
+    let specific_heat_ratio = 1.4;
+
+    match taylormaccoll::SupersonicCone::from_mach_and_shock_angle(mach_number, shock_angle, specific_heat_ratio) {
+        Ok(supersonic_cone) => {
+            println!("{:?}", supersonic_cone);
+        }
+        Err(e) => {
+            panic!("why, {:?}", e)
         }
     }
 }
