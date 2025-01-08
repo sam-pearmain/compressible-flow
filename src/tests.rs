@@ -110,7 +110,7 @@ fn test_solve_taylor_maccoll() {
         0.0, 
         specific_heat_ratio,
         true, 
-        None,
+        Some(20000),
     ) {
         Ok((velocity_components, thetas)) => {
             assert_eq!(velocity_components.len(), thetas.len());
