@@ -90,7 +90,6 @@ fn test_taylor_maccoll() {
 
     let mach_number = 4.0;
     let shock_angle = PI / 6.0; // 30 deg
-    let cone_angle = 0.4095987749775; // got from compressible aerodynamics calculator 
     let specific_heat_ratio = 1.4;
     
     // get deflection angle

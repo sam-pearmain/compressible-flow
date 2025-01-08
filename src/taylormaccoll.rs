@@ -69,22 +69,29 @@ impl SupersonicCone {
                 true, 
                 Some(4000),
             )?;
+
+        // extrapolate cone angle and surface mach number from results
         let cone_angle: f64 = *thetas.last().ok_or_else(|| IsentropicFlowError::WhatTheFuck)?;
         let surface_mach: f64 = velocity_components.last()
             .map(|&(radial, _)| radial)
             .ok_or_else(||IsentropicFlowError::WhatTheFuck)?;
-
         let shock_turn_angle: f64 = shock_angle - cone_angle;
 
-        // and get the other values
+        // and get the other values (probably make these into their own functions)
         let surface_pressure_ratio: f64 = 
-            isentropic::calc_pressure_ratio_from_mach(surface_mach, specific_heat_ratio)? *             // this is pc / p0c = pc / p02
-            (1.0 / isentropic::calc_pressure_ratio_from_mach(upstream_mach, specific_heat_ratio)?) *    // this is p1 / p01
-            obliqueshock::calc_stagnation_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)?;         // this is p02 / p01 = p0c / p01
+            obliqueshock::calc_stagnation_pressure_ratio(upstream_mach, shock_angle, specific_heat_ratio)? *    // p02 / p01 = p0c / p01
+            (1.0 / isentropic::calc_pressure_ratio_from_mach(upstream_mach, specific_heat_ratio)?) *    // p1 / p01
+            isentropic::calc_pressure_ratio_from_mach(surface_mach, specific_heat_ratio)?;              // pc / p0c = pc / p02
 
-        let surface_density_ratio: f64 = 1.0;
+        let surface_density_ratio: f64 = 
+            obliqueshock::calc_density_ratio(upstream_mach, shock_angle, specific_heat_ratio)? *            // rho2 / rho1
+            (1.0 / isentropic::calc_density_ratio_from_mach(surface_mach, specific_heat_ratio)?) *  // rho0c / rhoc
+            isentropic::calc_density_ratio_from_mach(upstream_mach, specific_heat_ratio)?;          // rho1 / rho01
 
-        let surface_temperature_ratio: f64 = 1.0;
+        let surface_temperature_ratio: f64 = 
+            obliqueshock::calc_temperature_ratio(upstream_mach, shock_angle, specific_heat_ratio)? *
+            (1.0 / isentropic::calc_temperature_ratio_from_mach(surface_mach, specific_heat_ratio)?) *  
+            isentropic::calc_mach_from_temperature_ratio(upstream_mach, specific_heat_ratio)?;          
 
         Ok(SupersonicCone{
             upstream_mach, 
@@ -241,5 +248,5 @@ pub fn calc_surface_density_ratio() {
 }
 
 pub fn calc_surface_temperature_ratio() {
-    
+
 }
