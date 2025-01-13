@@ -130,6 +130,8 @@ pub fn solve_taylor_maccoll(
         return Err(IsentropicFlowError::InvalidSpecificHeatRatio);
     }
 
+    // TODO nondimensionalise velocity components
+
     // set up step size
     let steps: i32 = steps.unwrap_or(4000);
     let h: f64 = (final_angle - initial_angle) / steps as f64;
